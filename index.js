@@ -1,20 +1,24 @@
 const express = require('express');
 const app = express();
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public')); // ليتمكن السيرفر من قراءة ملفات HTML
 
-let phoneStatus = "مغلق";
+// حالة الهاتف الافتراضية
+let phoneState = "مغلق"; 
 
-// جلب الحالة
+// 1. رابط الهاتف (المشاهدة فقط)
 app.get('/api/status', (req, res) => {
-    res.json({ status: phoneStatus });
+    res.json({ status: phoneState });
 });
 
-// تغيير الحالة
+// 2. رابط لوحة التحكم (لتغيير الحالة)
 app.post('/api/set', (req, res) => {
-    phoneStatus = req.body.status;
-    res.json({ success: true });
+    phoneState = req.body.status;
+    res.json({ success: true, status: phoneState });
 });
 
+// تشغيل السيرفر
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("السيرفر يعمل!"));
+app.listen(port, () => {
+  console.log("السيرفر يعمل الآن!");
+});
