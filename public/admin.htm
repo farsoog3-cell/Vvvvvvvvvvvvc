@@ -1,18 +1,21 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <body>
     <h1>لوحة التحكم</h1>
-    <button onclick="setStatus('مفتوح')">تشغيل الهاتف</button>
-    <button onclick="setStatus('مغلق')">إغلاق الهاتف</button>
+    <button onclick="sendAction('مفتوح')">تشغيل الهاتف</button>
+    <button onclick="sendAction('مغلق')">إغلاق الهاتف</button>
 
     <script>
-        async function setStatus(status) {
+        async function sendAction(status) {
+            // إرسال الأمر للسيرفر
             await fetch('/api/set', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: status })
             });
-            alert("تم تغيير الحالة إلى: " + status);
+
+            // هذا السطر هو الذي ينقلك فوراً لصفحة "شكراً لك"
+            window.location.href = '/thankyou.html';
         }
     </script>
 </body>
