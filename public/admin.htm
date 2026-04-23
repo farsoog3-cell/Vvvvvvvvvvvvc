@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ar">
+<body>
+    <h1>لوحة التحكم</h1>
+    <button onclick="setStatus('مفتوح')">تشغيل الهاتف</button>
+    <button onclick="setStatus('مغلق')">إغلاق الهاتف</button>
+
+    <script>
+        async function setStatus(status) {
+            await fetch('/api/set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status })
+            });
+            alert("تم تغيير الحالة إلى: " + status);
+        }
+    </script>
+</body>
+</html>
