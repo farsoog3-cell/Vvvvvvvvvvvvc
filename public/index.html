@@ -1,23 +1,63 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <title>لوحة التحكم والهاتف</title>
     <style>
-        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #222; margin: 0; }
-        .phone { width: 250px; height: 500px; border: 15px solid #000; border-radius: 40px; background: white; display: flex; justify-content: center; align-items: center; font-size: 24px; transition: 0.5s; }
+        body { font-family: sans-serif; text-align: center; background: #f4f4f4; padding: 20px; }
+        .box { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: 10px; }
+        #phone { font-size: 20px; font-weight: bold; padding: 20px; border: 2px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="phone" class="phone">جاري التحميل...</div>
+
+    <div class="box">
+        <h3>حالة الهاتف الحالية:</h3>
+        <div id="phone">جاري التحميل...</div>
+    </div>
+
+    <div class="box">
+        <h3>لوحة التحكم:</h3>
+        <button onclick="setStatus('مفتوح')">تشغيل الهاتف</button>
+        <button onclick="setStatus('مغلق')">إغلاق الهاتف</button>
+    </div>
+
+    <div class="box">
+        <h3>رابط الاتصال:</h3>
+        <input type="text" id="linkBox" readonly style="width: 80%; padding: 10px;">
+        <button onclick="copyLink()">نسخ الرابط</button>
+    </div>
 
     <script>
-        // دالة لجلب الحالة كل ثانية
+        // إظهار رابط الموقع في المربع
+        document.getElementById('linkBox').value = window.location.origin;
+
+        // دالة نسخ الرابط
+        function copyLink() {
+            const copyText = document.getElementById("linkBox");
+            copyText.select();
+            document.execCommand("copy");
+            alert("تم نسخ الرابط!");
+        }
+
+        // دالة تغيير الحالة
+        async function setStatus(status) {
+            await fetch('/api/set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status })
+            });
+            alert("تم تغيير الحالة إلى: " + status);
+        }
+
+        // تحديث حالة الهاتف تلقائياً كل ثانية
         setInterval(async () => {
             const res = await fetch('/api/status');
             const data = await res.json();
             const phone = document.getElementById('phone');
             phone.innerText = data.status === 'مفتوح' ? 'الهاتف يعمل' : 'الهاتف مغلق';
-            phone.style.background = data.status === 'مفتوح' ? '#7cfc00' : 'white';
+            phone.style.color = data.status === 'مفتوح' ? 'green' : 'red';
         }, 1000);
     </script>
 </body>
