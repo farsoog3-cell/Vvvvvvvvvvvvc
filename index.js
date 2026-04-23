@@ -1,18 +1,16 @@
 const express = require('express');
-const path = require('path');
 const app = express();
+app.use(express.json());
+app.use(express.static('public'));
 
-app.use(express.json()); 
-app.use(express.static('public')); 
+let phoneStatus = "مغلق";
 
-let phoneStatus = "مغلق"; // الحالة الافتراضية
-
-// الحصول على الحالة
+// جلب الحالة
 app.get('/api/status', (req, res) => {
     res.json({ status: phoneStatus });
 });
 
-// تحديث الحالة
+// تغيير الحالة
 app.post('/api/set', (req, res) => {
     phoneStatus = req.body.status;
     res.json({ success: true });
