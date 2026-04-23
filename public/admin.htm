@@ -4,17 +4,13 @@
     <h1>لوحة التحكم</h1>
     <button onclick="sendAction('مفتوح')">تشغيل الهاتف</button>
     <button onclick="sendAction('مغلق')">إغلاق الهاتف</button>
-
     <script>
         async function sendAction(status) {
-            // إرسال الأمر للسيرفر
             await fetch('/api/set', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: status })
             });
-
-            // هذا السطر هو الذي ينقلك فوراً لصفحة "شكراً لك"
             window.location.href = '/thankyou.html';
         }
     </script>
