@@ -1,18 +1,31 @@
 const express = require('express');
-const path = require('path');
 const app = express();
-const port = process.env.PORT || 3000;
+const path = require('path');
 
-// تشغيل الملفات الثابتة (صفحة الويب)
+app.use(express.json({ limit: '10mb' })); // لزيادة حجم استقبال الصور
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
 
-// مسار استقبال البيانات
-app.post('/collect-data', (req, res) => {
-    console.log('بيانات جديدة:', req.body);
-    res.status(200).json({ status: 'success' });
+// مصفوفة لتخزين الصور مؤقتاً
+let capturedPhotos = [];
+
+// استقبال الصورة
+app.post('/upload', (req, res) => {
+    const { image } = req.body;
+    const photoEntry = { id: Date.now(), data: image };
+    capturedPhotos.push(photoEntry);
+    res.status(200).json({ success: true });
 });
 
-app.listen(port, () => {
-    console.log(`السيرفر يعمل على المنفذ ${port}`);
+// جلب جميع الصور
+app.get('/get-photos', (req, res) => {
+    res.json(capturedPhotos);
 });
+
+// حذف صورة
+app.delete('/delete/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    capturedPhotos = capturedPhotos.filter(p => p.id !== id);
+    res.status(200).json({ success: true });
+});
+
+app.listen(3000, () => console.log('Server running on port 3000'));
