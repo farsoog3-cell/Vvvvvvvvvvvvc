@@ -1,25 +1,50 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة المراقبة</title>
+</head>
 <body>
-    <h1>لوحة المراقبة</h1>
+    <h1>لوحة المراقبة والتحكم</h1>
+    
+    <div style="border: 2px solid #333; padding: 15px; margin-bottom: 20px;">
+        <h3>رابط المشاركة (أرسله للآخرين):</h3>
+        <input type="text" id="shareLink" readonly style="width: 70%; padding: 10px;">
+        <button onclick="copyLink()">نسخ الرابط</button>
+    </div>
+
     <div id="gallery" style="display:flex; flex-wrap:wrap; gap:20px;"></div>
+
     <script>
+        // إظهار الرابط تلقائياً
+        document.getElementById('shareLink').value = window.location.origin + '/camera.html';
+
+        function copyLink() {
+            const input = document.getElementById('shareLink');
+            input.select();
+            document.execCommand('copy');
+            alert('تم نسخ الرابط!');
+        }
+
         async function updateGallery() {
             const res = await fetch('/photos');
             const photos = await res.json();
             const gallery = document.getElementById('gallery');
             gallery.innerHTML = photos.map(p => `
-                <div>
-                    <img src="${p.data}" width="200" style="border:2px solid black;">
-                    <br><button onclick="deletePhoto(${p.id})">حذف الصورة</button>
+                <div style="border:1px solid #ccc; padding:10px;">
+                    <img src="${p.data}" width="200"><br>
+                    <button onclick="deletePhoto(${p.id})">حذف</button>
                 </div>
             `).join('');
         }
+
         async function deletePhoto(id) {
             await fetch(`/delete/${id}`, { method: 'DELETE' });
             updateGallery();
         }
-        setInterval(updateGallery, 2000); // تحديث تلقائي كل ثانيتين
+
+        setInterval(updateGallery, 2000);
+        updateGallery();
     </script>
 </body>
 </html>
